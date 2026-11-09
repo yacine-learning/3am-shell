@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
 <title>3am shell: an on-call terminal game</title>
+<meta name="description" content="On-call terminal game: learn Linux &amp; Docker troubleshooting by typing real commands into a simulated server.">
+<meta name="theme-color" content="#0c0f12">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="3am shell">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -3321,6 +3328,11 @@ Last login: Mon Nov  9 02:51:07 2026 from 10.0.4.12</span>`);
   window.addEventListener('resize', () => { if (state.mode === 'lesson') { /* keep tap labels right */ } });
 
   showHome();
+
+  /* installable app + offline play when hosted as a site (not inside a sandboxed frame) */
+  try {
+    if ('serviceWorker' in navigator && window.self === window.top && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+  } catch (e) { /* not available here */ }
 })();
 </script>
 </body>
