@@ -3155,8 +3155,22 @@ Last login: Mon Nov  9 02:51:07 2026 from 10.0.4.12</span>`);
   const isNarrow = () => window.matchMedia('(max-width: 860px)').matches;
 
   /* ---------- modal ---------- */
-  function modal(html) { $('#mcard').innerHTML = html; $('#modal').hidden = false; const b = $('#mcard .btn.primary'); if (b) b.focus(); }
-  function closeModal() { $('#modal').hidden = true; }
+  function modal(html) { $('#mcard').innerHTML = html; $('#modal').hidden = false; enterApp(); const b = $('#mcard .btn.primary'); if (b) b.focus(); }
+  function closeModal() { $('#modal').hidden = true; if (!state.mode) leaveApp(); }
+
+  /* ---------- back button ----------
+     History holds the menu as its root entry plus at most one 'app' entry while a
+     lesson, a mission or a popup is open, so the phone/browser back button returns
+     to the menu (or closes the popup) instead of leaving the app. */
+  let skipPop = false;
+  function enterApp() { if (!history.state || history.state.v !== 'app') history.pushState({ v: 'app' }, ''); }
+  function leaveApp() { if (!skipPop && history.state && history.state.v === 'app') { skipPop = true; history.back(); } }
+  window.addEventListener('popstate', () => {
+    if (skipPop) { skipPop = false; return; }
+    if (!$('#modal').hidden) { $('#modal').hidden = true; if (state.mode) enterApp(); return; }
+    if (state.mode) showHome();
+  });
+  try { history.replaceState({ v: 'home' }, ''); } catch (e) { /* sandboxed frame */ }
   $('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
 
   /* ---------- HOME ---------- */
@@ -3214,7 +3228,7 @@ Last login: Mon Nov  9 02:51:07 2026 from 10.0.4.12</span>`);
     });
   }
   function showHome() {
-    state.mode = null; closeModal();
+    state.mode = null; closeModal(); leaveApp();
     $('#play').hidden = true; $('#home').hidden = false; renderHome(); window.scrollTo(0, 0);
   }
 
@@ -3222,6 +3236,7 @@ Last login: Mon Nov  9 02:51:07 2026 from 10.0.4.12</span>`);
   const state = { mode: null, idx: 0, step: 0, hints: 0, wrong: [], picked: null, solved: false };
   const panel = $('#panel');
   function enterPlay(title, chip) {
+    enterApp();
     $('#home').hidden = true; $('#play').hidden = false;
     $('#playTitle').innerHTML = title;
     $('#scoreChip').innerHTML = chip || '';
