@@ -124,6 +124,11 @@ h1.logo .cur{color:var(--green);animation:blink 1.1s steps(1) infinite}
 .debrief{background:linear-gradient(180deg,rgba(90,214,142,.08),transparent 70%),var(--panel);border:1px solid rgba(90,214,142,.4);border-radius:12px;padding:16px}
 .debrief h3{margin:0 0 6px;font-size:16px;color:var(--green);font-family:var(--mono)}
 .debrief p{margin:0 0 12px;font-size:14px;line-height:1.6;color:#c6ced6}
+.howto{margin:0 0 14px}
+.howto .label{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px}
+.howto .typeit{margin-top:8px;align-items:flex-start;overflow-wrap:anywhere}
+.howto .typeit .pr{flex:none}
+.howto .why{font-size:12.5px;color:var(--muted);line-height:1.45;margin:4px 2px 0}
 .btnrow{display:flex;gap:8px;flex-wrap:wrap}
 .btn{border-radius:9px;padding:9px 14px;font-weight:600;font-size:14px;border:1px solid var(--line2);background:var(--panel2)}
 .btn.primary{background:var(--green);color:#07150d;border-color:transparent}
@@ -2819,6 +2824,7 @@ return { Session, buildWorld, human, stripAnsi, NOW, MAN, COMMANDS, lookup, disk
       options: ['#shoply-alerts', '#inc-shoply-prod', '#ops-oncall', '#prod-incidents'], answer: 1,
       hints: ['You start in your home folder. List what\'s in it.', 'There\'s a .txt file. Print its content.', '<code>cat notes.txt</code>'],
       solution: ['cat ~/notes.txt'], expect: /Incidents:\s+#inc-shoply-prod/,
+      how: [['cat ~/notes.txt', 'the go-to: print the whole file'], ['less ~/notes.txt', 'same, in a scrollable pager (q to quit)'], ['grep -i incident ~/notes.txt', 'jump straight to the line you need']],
       debrief: '<code>ls</code> to look, <code>cat</code> to read. Note the trap: <code>#shoply-alerts</code> is in the notes too, but it\'s the bot feed.'
     },
     {
@@ -2828,6 +2834,7 @@ return { Session, buildWorld, human, stripAnsi, NOW, MAN, COMMANDS, lookup, disk
       options: ['Ubuntu 20.04.6 LTS', 'Ubuntu 22.04.4 LTS', 'Ubuntu 24.04.1 LTS', 'Debian 12 (bookworm)'], answer: 1,
       hints: ['System configuration lives in <code>/etc</code>.', 'Look for a file with "release" in its name: <code>ls /etc</code>.', '<code>cat /etc/os-release</code>'],
       solution: ['cat /etc/os-release'], expect: /PRETTY_NAME="Ubuntu 22\.04\.4 LTS"/,
+      how: [['cat /etc/os-release', 'the go-to, works on every modern distro'], ['grep PRETTY_NAME /etc/os-release', 'just the line you need'], ['uname -r', 'kernel version only, not the OS version: a common mix-up']],
       debrief: '<code>cat /etc/os-release</code> works on every modern distro. <code>uname -a</code> gives the kernel version, which is a different thing. Careful: containers have their own os-release (shop-api is Alpine, db is Debian).'
     },
     {
@@ -2837,6 +2844,7 @@ return { Session, buildWorld, human, stripAnsi, NOW, MAN, COMMANDS, lookup, disk
       options: ['/', '/var/lib/docker', '/var/log', '/srv/data'], answer: 2,
       hints: ['There\'s a command that shows free space per filesystem ("disk free").', 'Add <code>-h</code> for human-readable sizes and look at the Use% column.', '<code>df -h</code>'],
       solution: ['df -h'], expect: /\s97%\s+\/var\/log\n/,
+      how: [['df -h', 'the go-to: every filesystem, read the Use% column'], ['df -h /var/log', 'one mount point only, once you know which one']],
       debrief: '<code>df -h</code> answers "which disk is full"; <code>du</code> answers "what\'s filling it". /var/lib/docker at 83% deserves a look too, but it\'s not the fire.'
     },
     {
@@ -2846,6 +2854,7 @@ return { Session, buildWorld, human, stripAnsi, NOW, MAN, COMMANDS, lookup, disk
       options: ['1.2G', '3.3G', '7.7G', '19G'], answer: 1,
       hints: ['<code>ls -l</code> shows 4.0K for a folder, it doesn\'t total what\'s inside.', '<b>du</b> = disk usage. <code>-s</code> summarize, <code>-h</code> human sizes.', '<code>du -sh /var/log/logz</code>'],
       solution: ['du -sh /var/log/logz'], expect: /^3\.3G\t\/var\/log\/logz$/m,
+      how: [['du -sh /var/log/logz', 'the go-to: total size of a folder'], ['du -h -d 0 /var/log/logz', 'same with --max-depth 0; use -d 1 to see its subfolders']],
       debrief: '<code>du -sh FOLDER</code> is the one to remember. 1.2G is the biggest archive inside, not the folder total.'
     },
     {
@@ -2855,7 +2864,8 @@ return { Session, buildWorld, human, stripAnsi, NOW, MAN, COMMANDS, lookup, disk
       options: ['/var/log/logz/2026-09-logs.tar.gz', '/var/log/nginx/access.log.1', '/var/log/app/debug-trace.log', '/var/log/backups/shop-db-2026-11-08.sql.gz'], answer: 2,
       hints: ['Files can hide in subfolders. You want the size of every file, sorted.', '<code>du -a</code> lists files too, and <code>sort -h</code> sorts human sizes. Or use <code>find</code> with <code>-size</code>.', '<code>du -ah /var/log | sort -h | tail -5</code>'],
       solution: ['du -ah /var/log | sort -h | tail -5'], expect: /6\.2G\t\/var\/log\/app\/debug-trace\.log/,
-      debrief: 'Two good routes: <code>du -ah /var/log | sort -h | tail</code>, or <code>find /var/log -type f -size +1G -exec ls -lh {} \\;</code>. A 6.2G "debug-trace" log in production is suspicious. Remember it for later.'
+      how: [['du -ah /var/log | sort -h | tail -5', 'the go-to: every file and folder, biggest last'], ['find /var/log -type f -size +1G -exec ls -lh {} \\;', 'files only, bigger than 1G, with their sizes']],
+      debrief: '<code>du -a</code> lists folders too, <code>find -type f</code> only files: both point to the same culprit. A 6.2G "debug-trace" log in production is suspicious. Remember it for later.'
     },
     {
       id: 'm6', title: 'Error budget', tag: 'grep -c', from: 'API team', prio: 'P3',
@@ -2864,6 +2874,7 @@ return { Session, buildWorld, human, stripAnsi, NOW, MAN, COMMANDS, lookup, disk
       options: ['30', '47', '59', '360'], answer: 1,
       hints: ['grep prints the lines matching a pattern.', 'grep can count instead of printing. Careful: case matters.', '<code>grep -c ERROR /var/log/app/app.log</code>'],
       solution: ['grep -c ERROR /var/log/app/app.log'], expect: /^47$/m,
+      how: [['grep -c ERROR /var/log/app/app.log', 'the go-to: count matching lines'], ['grep ERROR /var/log/app/app.log | wc -l', 'same result: print the lines, then count them'], ['grep -cw ERROR /var/log/app/app.log', '-w matches whole words only, a bit stricter']],
       debrief: '<code>grep -c</code> counts matching lines. With <code>-i</code> you get 59, because some WARN lines say "retrying after error". Case-sensitivity matters on Linux.'
     },
     {
@@ -2873,6 +2884,7 @@ return { Session, buildWorld, human, stripAnsi, NOW, MAN, COMMANDS, lookup, disk
       options: ['2610', '48213', '803', '2381'], answer: 1,
       hints: ['ps lists processes, top shows them live.', 'Sort ps by CPU, highest first: <code>--sort=-%cpu</code>', '<code>ps aux --sort=-%cpu | head -n 3</code>'],
       solution: ['ps aux --sort=-%cpu | head -n 2'], expect: /^devops\s+48213\s+187\.3/m,
+      how: [['ps aux --sort=-%cpu | head -n 3', 'the go-to for a one-shot answer'], ['top', 'live view, sorted by CPU by default (P to sort by CPU, M by memory)'], ['top -o %CPU', 'explicit sort field']],
       debrief: 'PID 48213: <code>report_export.py --all-years</code>, a heavy finance export that the crontab says must run on the replica, not on prod. Someone started it by hand in tmux. 2610 is the search indexer\'s java, heavy on <i>memory</i> rather than CPU.'
     },
     {
@@ -2882,7 +2894,8 @@ return { Session, buildWorld, human, stripAnsi, NOW, MAN, COMMANDS, lookup, disk
       options: ['nginx', 'java', 'python3', 'docker-proxy'], answer: 2,
       hints: ['ss lists sockets. You want listening TCP ports, with numbers and process names.', '<code>ss -tlnp</code>: t=tcp, l=listening, n=numeric, p=process', '<code>ss -tlnp | grep 8080</code>'],
       solution: ['ss -tlnp | grep 8080'], expect: /:8080.*"python3",pid=30311/,
-      debrief: '<code>python3 -m http.server 8080</code> started from <code>~/share</code>: it\'s publicly serving a full database dump (<code>curl localhost:8080</code>). That\'s a real security incident. <code>lsof -i :8080</code> also works.'
+      how: [['ss -tlnp | grep 8080', 'the go-to: listening TCP sockets with their process'], ['ss -tulpn | grep 8080', 'same plus UDP (-u): same answer'], ['sudo lsof -i :8080', 'which process has the port open; sudo to see other users\' processes'], ['curl localhost:8080', 'then look at what it is serving']],
+      debrief: '<code>python3 -m http.server 8080</code> started from <code>~/share</code>: it\'s publicly serving a full database dump (<code>curl localhost:8080</code>). That\'s a real security incident.'
     },
     {
       id: 'm9', title: 'Backup audit', tag: 'find -size', from: 'Finance', prio: 'P4',
@@ -2891,6 +2904,7 @@ return { Session, buildWorld, human, stripAnsi, NOW, MAN, COMMANDS, lookup, disk
       options: ['3', '4', '5', '6'], answer: 2,
       hints: ['<code>ls</code> only looks at one folder. <code>find</code> walks the whole tree.', 'find has a size test: <code>-size +1G</code> means bigger than 1 GiB.', '<code>find /home/devops/backups -type f -size +1G | wc -l</code>'],
       solution: ['find /home/devops/backups -type f -size +1G | wc -l'], expect: /^5$/m,
+      how: [['find /home/devops/backups -type f -size +1G | wc -l', 'the go-to: list matches, count lines'], ['find /home/devops/backups -type f -size +1G -exec ls -lh {} \\;', 'see the files and their sizes to double-check']],
       debrief: 'There are 4 in the top folder and one more in <code>archive/</code>. <code>find ... | wc -l</code> counts results: one result per line.'
     },
     {
@@ -2900,7 +2914,8 @@ return { Session, buildWorld, human, stripAnsi, NOW, MAN, COMMANDS, lookup, disk
       options: ['shop-api', 'payments-worker', 'search-indexer', 'migrate-20261026'], answer: 1,
       hints: ['docker ps lists containers.', 'Look at the STATUS column: Up, Restarting and Exited mean very different things.', '<code>docker ps -a</code>'],
       solution: ['docker ps -a'], expect: /Restarting \(1\).*payments-worker/,
-      debrief: '"Restarting (1)" = it keeps exiting with code 1 and Docker restarts it (restart policy unless-stopped). The migrate container exited with 0, which is normal for a one-off job. <code>docker inspect -f \'{{.RestartCount}}\' payments-worker</code> says 1438 restarts.'
+      how: [['docker ps -a', 'the go-to: all containers, read the STATUS column'], ['docker ps -a --filter status=restarting', 'only the restarting ones'], ['docker inspect -f \'{{.RestartCount}}\' payments-worker', 'confirm it: how many restarts']],
+      debrief: '"Restarting (1)" = it keeps exiting with code 1 and Docker restarts it (restart policy unless-stopped). The migrate container exited with 0, which is normal for a one-off job. Its RestartCount is 1438.'
     },
     {
       id: 'm11', title: 'Read the logs', tag: 'docker logs', from: 'Customer support', prio: 'P1',
@@ -2909,6 +2924,7 @@ return { Session, buildWorld, human, stripAnsi, NOW, MAN, COMMANDS, lookup, disk
       options: ['It can\'t connect to the database (connection refused)', 'It runs out of memory and gets OOM-killed', 'The STRIPE_API_KEY variable is missing', 'Redis rejects its connection'], answer: 0,
       hints: ['What a container prints ends up in its Docker logs.', '<code>docker logs --tail 30 payments-worker</code>', 'Look at the error and fatal lines just before it exits. Redis says "connected".'],
       solution: ['docker logs --tail 30 payments-worker'], expect: /fatal could not connect to database/,
+      how: [['docker logs --tail 30 payments-worker', 'the go-to: last lines before it exits'], ['docker logs payments-worker 2>&1 | grep -iE \'error|fatal\'', 'only the error and fatal lines']],
       debrief: 'ECONNREFUSED on <code>db:5433</code>, 5 attempts, then exit 1. Redis is fine, and the only Stripe warning is about the webhook secret. Next question: why 5433?'
     },
     {
@@ -2918,6 +2934,7 @@ return { Session, buildWorld, human, stripAnsi, NOW, MAN, COMMANDS, lookup, disk
       options: ['db', 'shop-api', 'search-indexer', 'cache'], answer: 2,
       hints: ['There\'s a docker command that works like top, for containers.', 'docker stats streams live; add <code>--no-stream</code> for one snapshot.', '<code>docker stats --no-stream</code>'],
       solution: ['docker stats --no-stream'], expect: /search-indexer\s+[\d.]+%\s+3\.71GiB \/ 4GiB\s+92\.81%/,
+      how: [['docker stats --no-stream', 'the go-to: one snapshot, read MEM %'], ['docker stats', 'live version (Ctrl+C to quit)'], ['ps aux --sort=-%mem | head -n 3', 'host view: the same java process shows up']],
       debrief: 'search-indexer: 3.71GiB of its 4GiB limit (92.8%), and its logs show GC pressure. On the host, <code>ps aux --sort=-%mem</code> shows the same java process, as uid 1002, because container processes are normal Linux processes.'
     },
     {
@@ -2927,7 +2944,8 @@ return { Session, buildWorld, human, stripAnsi, NOW, MAN, COMMANDS, lookup, disk
       options: ['203.0.113.47', '198.51.100.66', '192.0.2.200', '10.0.4.12'], answer: 0,
       hints: ['auth.log is protected, so you need <code>sudo</code>. Keep only the "Failed password" lines.', 'Extract the IPs and count them: <code>grep -oE</code> prints only the part matching a regex, then <code>sort | uniq -c | sort -nr</code>.', '<code>sudo grep "Failed password" /var/log/auth.log | grep -oE "([0-9]+\\.){3}[0-9]+" | sort | uniq -c | sort -nr</code>'],
       solution: ["sudo grep 'Failed password' /var/log/auth.log | grep -oE '([0-9]+\\.){3}[0-9]+' | sort | uniq -c | sort -nr"], expect: /^\s+63 203\.0\.113\.47\n\s+58 198\.51\.100\.66/m,
-      debrief: 'The trap: if you count every line mentioning an IP, 198.51.100.66 wins (it also has many "Invalid user" and "Connection closed" lines). Filter first, then count. <code>awk \'{print $(NF-3)}\'</code> works too. And sshd_config still has <code>PasswordAuthentication yes</code>...'
+      how: [["sudo grep 'Failed password' /var/log/auth.log | grep -oE '([0-9]+\\.){3}[0-9]+' | sort | uniq -c | sort -nr", 'the go-to: filter, extract the IP, count'], ["sudo grep 'Failed password' /var/log/auth.log | awk '{print $(NF-3)}' | sort | uniq -c | sort -nr", 'same, awk picks the 4th field from the end']],
+      debrief: 'The trap: if you count every line mentioning an IP, 198.51.100.66 wins (it also has many "Invalid user" and "Connection closed" lines). Filter first, then count. And sshd_config still has <code>PasswordAuthentication yes</code>...'
     },
     {
       id: 'm14', title: 'Bad gateway', tag: 'awk', from: 'Customer support', prio: 'P1',
@@ -2936,7 +2954,8 @@ return { Session, buildWorld, human, stripAnsi, NOW, MAN, COMMANDS, lookup, disk
       options: ['/api/checkout', '/api/payments/confirm', '/api/cart', '/api/orders'], answer: 0,
       hints: ['In this log format, fields are separated by spaces: <code>$7</code> is the path and <code>$9</code> the status code.', 'awk can filter rows and print a field: <code>awk \'$9 == 502 {print $7}\'</code>, then count.', '<code>awk \'$9 == 502 {print $7}\' /var/log/nginx/access.log | sort | uniq -c | sort -nr</code>'],
       solution: ["awk '$9 == 502 {print $7}' /var/log/nginx/access.log | sort | uniq -c | sort -nr"], expect: /^\s+41 \/api\/checkout\n\s+37 \/api\/payments\/confirm/m,
-      debrief: '41 on checkout vs 37 on payments/confirm. If you count all 5xx, payments/confirm wins because of its fifteen 504s, so read the question carefully. <code>grep \'" 502 \'</code> + <code>awk \'{print $7}\'</code> works too; a plain <code>grep 502</code> also matches response sizes like 15023.'
+      how: [["awk '$9 == 502 {print $7}' /var/log/nginx/access.log | sort | uniq -c | sort -nr", 'the go-to: filter on the status field, count paths'], ["grep '\" 502 ' /var/log/nginx/access.log | awk '{print $7}' | sort | uniq -c | sort -nr", 'same with grep; the quote and spaces avoid matching sizes like 15023']],
+      debrief: '41 on checkout vs 37 on payments/confirm. If you count all 5xx, payments/confirm wins because of its fifteen 504s, so read the question carefully. A plain <code>grep 502</code> would also match response sizes like 15023.'
     },
     {
       id: 'm15', title: 'Spot the difference', tag: 'docker inspect', from: 'Marta · Platform lead', prio: 'P1',
@@ -2945,6 +2964,7 @@ return { Session, buildWorld, human, stripAnsi, NOW, MAN, COMMANDS, lookup, disk
       options: ['DB_PORT is 5433, but Postgres listens on 5432', 'DB_HOST is localhost instead of db', 'It is on a different Docker network than db', 'The db container is stopped'], answer: 0,
       hints: ['A container\'s env vars and networks are in <code>docker inspect</code>. You can\'t exec into a restarting container.', 'Compare the Env of payments-worker with shop-api: <code>docker inspect -f \'{{.Config.Env}}\' payments-worker shop-api</code>', 'Check which port postgres really uses: <code>docker logs db | grep listening</code> or the PORTS column of <code>docker ps</code>.'],
       solution: ["docker inspect -f '{{.Config.Env}}' payments-worker shop-api", 'docker logs db | grep listening'], expect: /DB_PORT=5433[\s\S]*DB_PORT=5432[\s\S]*port 5432/,
+      how: [["docker inspect -f '{{.Config.Env}}' payments-worker shop-api", 'step 1: compare the env vars side by side'], ['docker inspect payments-worker | grep DB_', 'alternative for step 1: grep the full JSON'], ['docker logs db | grep listening', 'step 2: which port postgres really uses'], ['docker ps', 'or read the PORTS column of db']],
       debrief: 'DB_PORT=5433 (typo or stale config) while Postgres listens on 5432. DB_HOST is <code>db</code>, both containers are on shoply_backend, and db is Up (healthy): the other options can all be ruled out from inspect and docker ps. That\'s the root cause of the payment outage.'
     },
     {
@@ -2954,6 +2974,7 @@ return { Session, buildWorld, human, stripAnsi, NOW, MAN, COMMANDS, lookup, disk
       options: ['info', 'debug', 'trace', 'warn'], answer: 2,
       hints: ['You can run commands inside a running container with <code>docker exec</code>.', '<code>docker exec -it shop-api sh</code> gives you a shell (Alpine has no bash). Then read the file.', '<code>docker exec shop-api cat /app/config/production.yaml</code>'],
       solution: ['docker exec shop-api cat /app/config/production.yaml'], expect: /level: trace/,
+      how: [['docker exec shop-api cat /app/config/production.yaml', 'the go-to: run one command inside the container'], ['docker exec -it shop-api sh', 'or open a shell inside it, then cat the file (Alpine: sh, not bash)'], ['docker exec shop-api grep level /app/config/production.yaml', 'just the line you need']],
       debrief: '<code>level: trace</code>, left on by Kevin for INC-2231, writing to /var/log/app/debug-trace.log. That\'s what filled /var/log. Watch out for <code>staging.yaml</code> (debug) and <code>default.yaml</code> (info) in the same folder.'
     },
     {
@@ -2963,6 +2984,7 @@ return { Session, buildWorld, human, stripAnsi, NOW, MAN, COMMANDS, lookup, disk
       options: ['The cron job is commented out, so it never ran', 'pg_dump could not connect to the db container', '/var/log is full, and the backup writes its dump there', 'backup.sh is not executable (permission denied)'], answer: 2,
       hints: ['Scheduled jobs of your user are listed by <code>crontab -l</code>.', 'The cron line sends output to a log file: read it. Then look in the script for where it writes the dump.', '<code>crontab -l</code>, <code>cat /var/log/backup.log</code>, <code>grep DEST ~/scripts/backup.sh</code>, <code>df -h /var/log</code>'],
       solution: ['crontab -l', 'cat /var/log/backup.log', 'grep DEST= ~/scripts/backup.sh', 'df -h /var/log'], expect: /backup\.sh >> \/var\/log\/backup\.log[\s\S]*No space left on device[\s\S]*DEST=\/var\/log\/backups[\s\S]*97% \/var\/log/,
+      how: [['crontab -l', 'step 1: find the job and where it logs'], ['tail -n 5 /var/log/backup.log', 'step 2: read the end of its log'], ['grep DEST= ~/scripts/backup.sh', 'step 3: where does the script write?'], ['df -h /var/log', 'step 4: is there room there?']],
       debrief: 'The cron job ran (02:00), pg_dump started, and gzip died with "No space left on device" because the script writes dumps to <code>/var/log/backups</code>, on the full /var/log disk. Root causes of the night: a trace log left on in production, backups on the log disk, and a misconfigured DB_PORT. You\'ve earned your coffee.'
     }
   ];
@@ -3133,8 +3155,22 @@ Last login: Mon Nov  9 02:51:07 2026 from 10.0.4.12</span>`);
   const isNarrow = () => window.matchMedia('(max-width: 860px)').matches;
 
   /* ---------- modal ---------- */
-  function modal(html) { $('#mcard').innerHTML = html; $('#modal').hidden = false; const b = $('#mcard .btn.primary'); if (b) b.focus(); }
-  function closeModal() { $('#modal').hidden = true; }
+  function modal(html) { $('#mcard').innerHTML = html; $('#modal').hidden = false; enterApp(); const b = $('#mcard .btn.primary'); if (b) b.focus(); }
+  function closeModal() { $('#modal').hidden = true; if (!state.mode) leaveApp(); }
+
+  /* ---------- back button ----------
+     History holds the menu as its root entry plus at most one 'app' entry while a
+     lesson, a mission or a popup is open, so the phone/browser back button returns
+     to the menu (or closes the popup) instead of leaving the app. */
+  let skipPop = false;
+  function enterApp() { if (!history.state || history.state.v !== 'app') history.pushState({ v: 'app' }, ''); }
+  function leaveApp() { if (!skipPop && history.state && history.state.v === 'app') { skipPop = true; history.back(); } }
+  window.addEventListener('popstate', () => {
+    if (skipPop) { skipPop = false; return; }
+    if (!$('#modal').hidden) { $('#modal').hidden = true; if (state.mode) enterApp(); return; }
+    if (state.mode) showHome();
+  });
+  try { history.replaceState({ v: 'home' }, ''); } catch (e) { /* sandboxed frame */ }
   $('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
 
   /* ---------- HOME ---------- */
@@ -3192,7 +3228,7 @@ Last login: Mon Nov  9 02:51:07 2026 from 10.0.4.12</span>`);
     });
   }
   function showHome() {
-    state.mode = null; closeModal();
+    state.mode = null; closeModal(); leaveApp();
     $('#play').hidden = true; $('#home').hidden = false; renderHome(); window.scrollTo(0, 0);
   }
 
@@ -3200,6 +3236,7 @@ Last login: Mon Nov  9 02:51:07 2026 from 10.0.4.12</span>`);
   const state = { mode: null, idx: 0, step: 0, hints: 0, wrong: [], picked: null, solved: false };
   const panel = $('#panel');
   function enterPlay(title, chip) {
+    enterApp();
     $('#home').hidden = true; $('#play').hidden = false;
     $('#playTitle').innerHTML = title;
     $('#scoreChip').innerHTML = chip || '';
@@ -3220,6 +3257,16 @@ Last login: Mon Nov  9 02:51:07 2026 from 10.0.4.12</span>`);
     enterPlay(`<span>T${String(i + 1).padStart(2, '0')} ·</span> ${esc(l.title)}`, `Training <b>${i + 1}</b>/${LESSONS.length}`);
     renderLesson();
   }
+  function bindTypeit() {
+    panel.querySelectorAll('.typeit').forEach(b => b.addEventListener('click', () => { term.input.value = b.dataset.cmd; term.caretEnd(); term.input.focus({ preventScroll: true }); }));
+  }
+  /* debrief list: the go-to command first, then common alternatives or follow-up steps */
+  function howto(l) {
+    if (!l.how || !l.how.length) return '';
+    const go = isNarrow() ? 'tap to type' : 'click to type';
+    return `<div class="howto"><div class="label">Commands that solve it</div>${l.how.map(([cmd, why]) =>
+      `<button class="typeit" data-cmd="${esc(cmd)}"><span class="pr">$</span><span>${esc(cmd)}</span><span class="go">${go}</span></button>${why ? `<div class="why">${esc(why)}</div>` : ''}`).join('')}</div>`;
+  }
   function renderLesson() {
     const l = LESSONS[state.idx];
     const n = l.steps.length, done = Math.min(state.step, n);
@@ -3238,7 +3285,7 @@ Last login: Mon Nov  9 02:51:07 2026 from 10.0.4.12</span>`);
         <div class="btnrow">${next ? '<button class="btn primary" id="nextLesson">Next lesson →</button>' : '<button class="btn primary" id="toMissions">Start mission 1 →</button>'}<button class="btn" id="toMenu">Menu</button></div></div>`;
     }
     panel.innerHTML = html;
-    panel.querySelectorAll('.typeit').forEach(b => b.addEventListener('click', () => { term.input.value = b.dataset.cmd; term.caretEnd(); term.input.focus({ preventScroll: true }); }));
+    bindTypeit();
     const nl = $('#nextLesson'); if (nl) nl.onclick = () => startLesson(state.idx + 1);
     const tm = $('#toMissions'); if (tm) tm.onclick = () => startLevel(0);
     const mm = $('#toMenu'); if (mm) mm.onclick = showHome;
@@ -3289,12 +3336,13 @@ Last login: Mon Nov  9 02:51:07 2026 from 10.0.4.12</span>`);
       const pts = state.earned;
       html += `<div class="qbox"><div class="label"><span>Answer</span></div><p class="qtext">${esc(l.question)}</p>
         <div class="opts"><div class="opt right ${mono ? 'mono' : ''}"><span class="l">${'ABCD'[l.answer]}</span><span class="v">${esc(l.options[l.answer])}</span></div></div></div>
-        <div class="debrief"><h3>✓ Resolved · +${pts} pts</h3><p>${l.debrief}</p><div class="btnrow">${state.idx + 1 < LEVELS.length ? '<button class="btn primary" id="nextLevel">Next mission →</button>' : ''}<button class="btn" id="replay">Replay</button><button class="btn" id="toMenu2">Menu</button></div></div>`;
+        <div class="debrief"><h3>✓ Resolved · +${pts} pts</h3><p>${l.debrief}</p>${howto(l)}<div class="btnrow">${state.idx + 1 < LEVELS.length ? '<button class="btn primary" id="nextLevel">Next mission →</button>' : ''}<button class="btn" id="replay">Replay</button><button class="btn" id="toMenu2">Menu</button></div></div>`;
     }
     panel.innerHTML = html;
     panel.querySelectorAll('.opt[data-k]').forEach(b => b.addEventListener('click', () => { state.picked = +b.dataset.k; renderLevel(); }));
     const sb = $('#submitBtn'); if (sb) sb.onclick = submitAnswer;
     const hb = $('#hintBtn'); if (hb) hb.onclick = () => { if (state.hints < l.hints.length) { state.hints++; renderLevel(); const ol = panel.querySelector('.hints ol'); if (ol) ol.lastElementChild.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } };
+    bindTypeit();
     const nx = $('#nextLevel'); if (nx) nx.onclick = () => startLevel(state.idx + 1);
     const rp = $('#replay'); if (rp) rp.onclick = () => startLevel(state.idx);
     const tm = $('#toMenu2'); if (tm) tm.onclick = showHome;
