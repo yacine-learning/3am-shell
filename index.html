@@ -18,7 +18,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{
+/* dark palette: the page default, and always on the terminal (and the command chips that mimic it) */
+:root, .termwrap, .typeit{
   --bg:#0c0f12; --bg2:#11161b; --panel:#151b21; --panel2:#1a2129; --line:#252e38; --line2:#2f3a46;
   --text:#dbe2e9; --muted:#8a97a4; --faint:#5d6976;
   --text2:#c6ced6;
@@ -32,6 +33,7 @@
   --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   --sans:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
 }
+/* light palette: everything outside the terminal */
 :root[data-theme="light"]{
   --bg:#f5f7f9; --bg2:#edf0f3; --panel:#ffffff; --panel2:#eceff3; --line:#dce2e9; --line2:#c6cfd9;
   --text:#1a2129; --text2:#36414c; --muted:#56626f; --faint:#7d8996;
@@ -39,8 +41,7 @@
   --amber-rgb:214,134,20; --green-rgb:19,120,74; --red-rgb:192,54,47;
   --blue:#1d64b8; --blue-d:#e2edfa; --grey-d:#eaedf1; --mag:#8a3dbd; --cyan:#0b7f76; --cyn:#0b7f76; --yel:#866400;
   --on-accent:#ffffff; --code-bg:#edf0f4; --code-fg:#1a2129; --opt-bg:#f8fafb; --sel-bg:#e8f1fc;
-  --term:#fbfcfd; --tbar-bg:#eef1f4; --tbar-line:#dce2e9; --tbar-line2:#c6cfd9; --t-text:#1a2129; --t-err:#c0362f; --t-dim:#7d8996;
-  --key-bg:#ffffff; --key-line:#d3dae2; --key-active:#e5e9ee; --scrim:rgba(20,26,32,.35); --shadow:rgba(20,30,40,.18);
+  --scrim:rgba(20,26,32,.35); --shadow:rgba(20,30,40,.18);
   color-scheme:light;
 }
 *{box-sizing:border-box}
@@ -184,7 +185,7 @@ h1.logo .cur{color:var(--green);animation:blink 1.1s steps(1) infinite}
 .step.done .typeit{display:none}
 
 /* ---------- TERMINAL ---------- */
-.termwrap{display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--term)}
+.termwrap{display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--term);color:var(--text)}
 .tbar{display:flex;align-items:center;gap:7px;padding:8px 12px;border-bottom:1px solid var(--tbar-line);background:var(--tbar-bg);flex:none}
 .tbar i{width:10px;height:10px;border-radius:50%;background:#2a3139}
 .tbar i:nth-child(1){background:#ff5f57}.tbar i:nth-child(2){background:#febc2e}.tbar i:nth-child(3){background:#28c840}
@@ -3031,6 +3032,7 @@ return { Session, buildWorld, human, stripAnsi, NOW, MAN, COMMANDS, lookup, disk
 
   /* ---------- version + changelog (newest first; bump VERSION with each release to main) ---------- */
   const CHANGELOG = [
+    { v: '1.4.2', date: '2026-11-14', notes: ['The terminal always stays dark; the theme only changes the rest of the page.'] },
     { v: '1.4.1', date: '2026-11-14', notes: ['Dark theme is the default again; the theme button switches dark / light / auto.'] },
     { v: '1.4.0', date: '2026-11-14', notes: ['Light theme. The button next to the version switches auto (follows your system) / light / dark.'] },
     { v: '1.3.0', date: '2026-11-12', notes: ['Version number on the menu; click it for this changelog.'] },
